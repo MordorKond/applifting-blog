@@ -5,7 +5,7 @@ import { createInnerTRPCContext } from "./trpc";
 
 export function ssgHelper() {
   return createServerSideHelpers({
-    ctx: createInnerTRPCContext({ session: null }),
+    ctx: createInnerTRPCContext({ session: null, revalidateSSG: null }),
     router: appRouter,
     transformer: superjson,
   });
