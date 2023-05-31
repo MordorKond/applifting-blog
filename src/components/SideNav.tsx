@@ -1,7 +1,13 @@
 import { signIn, signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { IconHoverEffect } from "./IconHoverEffect";
-import { VscAccount, VscHome, VscSignIn, VscSignOut } from "react-icons/vsc";
+import {
+  VscAccount,
+  VscArchive,
+  VscHome,
+  VscSignIn,
+  VscSignOut,
+} from "react-icons/vsc";
 
 export function SideNav() {
   const session = useSession();
@@ -60,17 +66,17 @@ export function SideNav() {
               </button>
             </li>
           )}
+          <li>
+            <Link href="/blog/">
+              <IconHoverEffect>
+                <span className="flex items-center gap-4">
+                  <VscArchive className="h-8 w-8" />
+                  <span className="hidden text-lg md:inline">Blog</span>
+                </span>
+              </IconHoverEffect>
+            </Link>
+          </li>
         </ul>
-        <li>
-          <Link href="/">
-            <IconHoverEffect>
-              <span className="flex items-center gap-4">
-                <VscHome className="h-8 w-8" />
-                <span className="hidden text-lg md:inline">Blog</span>
-              </span>
-            </IconHoverEffect>
-          </Link>
-        </li>
       </nav>
     </>
   );
