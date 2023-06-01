@@ -24,7 +24,44 @@ model Tweet {
     @@unique([createdAt,id])
 
 }
+model Article {
+    id        String   @id @default(uuid())
+    userId    String
+    content   String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt()
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    // likes     Like[]
+    comments Comment[]
+    @@index([userId])
+    @@unique([createdAt,id])
 
+}
+model Comment {
+    id          String  @id @default(uuid())
+    userId      String
+    articleId   String
+    contetnt    String
+    votes       Vote[]
+    createdAt   DateTime    @default(now())
+    user        User    @relation(fields: [userId],references: [id],onDelete: Cascade)
+    article     Article @relation(fields: [articleId],references: [id],onDelete: Cascade)
+
+    @@index([userId])
+    @@index([articleId])
+    @@unique([createdAt,id])
+}
+model Vote {
+    userId String
+    commentId String
+    vote    Int
+    user User @relation(fields: [userId], references: [id],onDelete: Cascade)
+    comment Comment @relation(fields: [commentId], references: [id],onDelete: Cascade)
+
+    @@id([userId,commentId])
+    @@index([userId])
+    @@index([commentId])
+}
 model Like {
     userId String
     tweetId String
@@ -77,6 +114,9 @@ model User {
     sessions      Session[]
     //non next auth
     tweets        Tweet[]
+    articles      Article[]
+    comments      Comment[]
+    votes         Vote[]
     likes         Like[]
     followers     User[] @relation(name:"Followers")
     follows       User[] @relation(name:"Followers")
