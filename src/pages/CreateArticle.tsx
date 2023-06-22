@@ -9,6 +9,7 @@ import type { ChangeEvent } from "react"
 import type { NextPage } from "next";
 import { UploadButton } from "@uploadthing/react";
 import axios from "axios";
+import { warn } from "console";
 
 const CreateArticle: NextPage = () => {
     return (
@@ -49,7 +50,20 @@ export function ArticleEditor({
     id,
 }: ArticleEditorProps) {
     //hooks
-    const { data: createSignedUrls } = api.article.createPresignedUrls.useQuery({ count: 1 })
+    const [putUrls, setPutUrls] = useState<{ url: string, key: string }[]>()
+    const [getUrls, setGetUrls] = useState<{ url: string, key: string }[]>()
+    const createPresignedGetUrls = api.article.createPresignedUrlsGet.useMutation({
+        onSuccess(data) {
+            console.log('list of presigned get urls recieved', data)
+            setGetUrls(data)
+        },
+    })
+    const createPresignedPutUrls = api.article.createPresignedUrlsPut.useMutation({
+        onSuccess(data) {
+            console.log('list of presigned put urls recieved', data)
+            setPutUrls(data)
+        },
+    })
     const [signedUrl, setSignetUrl] = useState<string>()
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const [file, setFile] = useState<unknown>()
@@ -63,7 +77,6 @@ export function ArticleEditor({
         image: image,
         content: content,
     });
-
 
     const handleInputChange = (
         event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -112,23 +125,19 @@ export function ArticleEditor({
         e.preventDefault();
         const formData2 = new FormData()
         formData2.append('file', 'file')
-        if (!signedUrl) return
-
-        await axios.put(signedUrl, file, {
-            headers:
-            {
+        if (!(putUrls && putUrls[0])) return
+        await axios.put(putUrls[0].url, file, {
+            headers: {
                 'Content-Type': 'image/jpeg',
             },
         })
-
+        await createPresignedGetUrls.mutateAsync({ keys: putUrls.map(x => x.key) })
 
         console.log('submititng form');
     }
 
     const getSignedUrl = () => {
-        if (!(createSignedUrls && createSignedUrls[0])) return
-        setSignetUrl(createSignedUrls[0].url)
-        console.log('signedUrl:', signedUrl)
+        createPresignedPutUrls.mutate({ count: 1 })
     };
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {

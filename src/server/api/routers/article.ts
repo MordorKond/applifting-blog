@@ -7,16 +7,38 @@ import {
 import { z } from "zod";
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { s3Client } from '~/server/s3';
-import { PutObjectCommand } from '@aws-sdk/client-s3';
+import { PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 
 export const articleRouter = createTRPCRouter({
-    createPresignedUrls: protectedProcedure
+
+    createPresignedUrlsGet: protectedProcedure
+        .input(z.object({ keys: z.array(z.string()) }))
+        .mutation(async ({ input }) => {
+            const urls = [];
+            for (let i = 0; i < input.keys.length; i++) {
+                const key = input.keys[i]
+                if (!key) return
+                const url = await getSignedUrl(
+                    s3Client,
+                    new GetObjectCommand({
+                        Bucket: process.env.AWS_BUCKET_NAME,
+                        Key: key,
+                    })
+                );
+                urls.push({
+                    url,
+                    key,
+                });
+            }
+            return urls;
+        }),
+
+    createPresignedUrlsPut: protectedProcedure
         .input(z.object({ count: z.number().gte(1).lte(4) }))
-        .query(async ({ input }) => {
+        .mutation(async ({ input }) => {
             const urls = [];
             for (let i = 0; i < input.count; i++) {
                 const key = uuidv4();
-
                 const url = await getSignedUrl(
                     s3Client,
                     new PutObjectCommand({
@@ -25,15 +47,14 @@ export const articleRouter = createTRPCRouter({
                         ContentType: 'image/jpeg'
                     })
                 );
-
                 urls.push({
                     url,
                     key,
                 });
             }
-
             return urls;
         }),
+
     getArticleById: publicProcedure
         .input(z.object({ id: z.string() }))
         .query(async ({ input: { id }, ctx }) => {
