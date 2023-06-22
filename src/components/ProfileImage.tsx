@@ -6,11 +6,7 @@ type ProfileImageProps = {
   className?: string;
 };
 
-export function ProfileImage({
-  src,
-  className = "",
-}: //   ...props
-ProfileImageProps) {
+export function ProfileImage({ src, className = "" }: ProfileImageProps) {
   return (
     <>
       <div

@@ -14,12 +14,15 @@ const MyApp: AppType<{ session: Session | null }> = ({
     <SessionProvider session={session}>
       <Head>
         <title>Twitter Clone</title>
-        <meta name="description" content="This is a twitter clone by WebDev Simplified"/>
+        <meta
+          name="description"
+          content="This is a twitter clone by WebDev Simplified"
+        />
       </Head>
       <div className="container mx-auto flex items-start sm:pr-4">
-        <SideNav/>
+        <SideNav />
         <div className="min-h-screen flex-grow border-x">
-        <Component {...pageProps} />
+          <Component {...pageProps} />
         </div>
       </div>
     </SessionProvider>

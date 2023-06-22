@@ -1,6 +1,3 @@
-import { useSession } from "next-auth/react";
-import { Button } from "./Button";
-import { ProfileImage } from "./ProfileImage";
 import {
   FormEvent,
   useCallback,
@@ -8,8 +5,12 @@ import {
   useRef,
   useState,
 } from "react";
-import { api } from "~/utils/api";
+
+import { Button } from "./Button";
+import { ProfileImage } from "./ProfileImage";
 import { Updater } from "@tanstack/react-query";
+import { api } from "~/utils/api";
+import { useSession } from "next-auth/react";
 
 function updateTextHeight(textArea?: HTMLTextAreaElement) {
   if (textArea == null) return;

@@ -3,13 +3,12 @@ import {
     protectedProcedure,
     publicProcedure,
 } from "~/server/api/trpc";
-
+import type { createTRPCContext } from "~/server/api/trpc"
 import type { Prisma } from "@prisma/client";
 import type { inferAsyncReturnType } from "@trpc/server";
 import { z } from "zod";
-import type { createTRPCContext } from '~/server/api/trpc'
 
-export const tweetRouter = createTRPCRouter({
+export const commentRouter = createTRPCRouter({
     infiniteProfileFeed: publicProcedure
         .input(
             z.object({
@@ -24,7 +23,7 @@ export const tweetRouter = createTRPCRouter({
             })
         )
         .query(async ({ input: { limit = 10, userId, cursor }, ctx }) => {
-            return await getInfiniteTweets({
+            return await getInfiniteComments({
                 ctx,
                 limit,
                 cursor,
@@ -34,7 +33,7 @@ export const tweetRouter = createTRPCRouter({
     infiniteFeed: publicProcedure
         .input(
             z.object({
-                onlyFollowing: z.boolean().optional(),
+                articleId: z.string(),
                 limit: z.number().optional(),
                 cursor: z
                     .object({
@@ -44,56 +43,50 @@ export const tweetRouter = createTRPCRouter({
                     .optional(),
             })
         )
-        .query(
-            async ({ input: { limit = 10, onlyFollowing = false, cursor }, ctx }) => {
-                const currentUserId = ctx.session?.user.id;
-                return await getInfiniteTweets({
-                    ctx,
-                    limit,
-                    cursor,
-                    whereClause:
-                        currentUserId == null || !onlyFollowing
-                            ? undefined
-                            : {
-                                user: { followers: { some: { id: currentUserId } } },
-                            },
-                });
-            }
-        ),
-    create: protectedProcedure
-        .input(z.object({ content: z.string() }))
-        .mutation(async ({ input: { content }, ctx }) => {
-            const tweet = await ctx.prisma.tweet.create({
-                data: { content, userId: ctx.session.user.id },
+        .query(async ({ input: { limit = 10, articleId, cursor }, ctx }) => {
+            return await getInfiniteComments({
+                ctx,
+                limit,
+                cursor,
+                whereClause: {
+                    articleId,
+                },
             });
-            void ctx.revalidateSSG?.(`/profiles/${ctx.session.user.id}`);
-
-            return tweet;
         }),
-    toggleLike: protectedProcedure
+    create: protectedProcedure
+        .input(z.object({ content: z.string(), articleId: z.string() }))
+        .mutation(async ({ input: { content, articleId }, ctx }) => {
+            const comment = await ctx.prisma.comment.create({
+                data: { content, articleId, userId: ctx.session.user.id },
+            });
+            // void ctx.revalidateSSG?.(`/profiles/${ctx.session.user.id}`);
+
+            return comment;
+        }),
+    toggleVote: protectedProcedure
         .input(z.object({ id: z.string() }))
         .mutation(async ({ input: { id }, ctx }) => {
-            const data = { tweetId: id, userId: ctx.session.user.id };
-            const existingLike = await ctx.prisma.like.findUnique({
-                where: { userId_tweetId: data },
+            const data = { commentId: id, userId: ctx.session.user.id };
+            const existingVote = await ctx.prisma.vote.findUnique({
+                where: { userId_commentId: data },
             });
-            if (existingLike == null) {
-                await ctx.prisma.like.create({ data });
-                return { addedLike: true };
+            if (existingVote == null) {
+                await ctx.prisma.vote.create({ data });
+                return { addedVote: true };
             } else {
-                await ctx.prisma.like.delete({ where: { userId_tweetId: data } });
-                return { addedLike: false };
+                await ctx.prisma.vote.delete({ where: { userId_commentId: data } });
+                return { addedVote: false };
             }
         }),
 });
 
-async function getInfiniteTweets({
+async function getInfiniteComments({
     whereClause,
     ctx,
     limit,
     cursor,
 }: {
-    whereClause?: Prisma.TweetWhereInput;
+    whereClause?: Prisma.CommentWhereInput;
     limit: number;
     cursor:
     | {
@@ -104,7 +97,7 @@ async function getInfiniteTweets({
     ctx: inferAsyncReturnType<typeof createTRPCContext>;
 }) {
     const currentUserId = ctx.session?.user.id;
-    const data = await ctx.prisma.tweet.findMany({
+    const data = await ctx.prisma.comment.findMany({
         take: limit + 1,
         cursor: cursor ? { createdAt_id: cursor } : undefined,
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
@@ -113,8 +106,8 @@ async function getInfiniteTweets({
             id: true,
             createdAt: true,
             content: true,
-            _count: { select: { likes: true } },
-            likes:
+            _count: { select: { votes: true } },
+            votes:
                 currentUserId == null ? false : { where: { userId: currentUserId } },
             user: {
                 select: {
@@ -137,14 +130,15 @@ async function getInfiniteTweets({
         }
     }
     return {
-        tweets: data.map((tweet) => ({
-            id: tweet.id,
-            content: tweet.content,
-            createdAt: tweet.createdAt,
-            user: tweet.user,
-            likeCount: tweet._count.likes,
-            likedByMe: tweet.likes?.length > 0,
+        comments: data.map((comment) => ({
+            id: comment.id,
+            content: comment.content,
+            createdAt: comment.createdAt,
+            user: comment.user,
+            voteCount: comment._count.votes,
+            votedByMe: comment.votes?.length > 0,
         })),
         nextCursor,
     };
 }
+

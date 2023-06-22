@@ -4,18 +4,20 @@ import type {
   InferGetStaticPropsType,
   NextPage,
 } from "next";
-import Head from "next/head";
-import { ssgHelper } from "~/server/api/ssgHelper";
-import { api } from "~/utils/api";
-import ErrorPage from "next/error";
-import { VscArrowLeft } from "react-icons/vsc";
-import { ProfileImage } from "~/components/ProfileImage";
-import { IconHoverEffect } from "~/components/IconHoverEffect";
-import Link from "next/link";
-import { InfiniteTweetList } from "~/components/InfiniteTweetList";
+
 import { Button } from "~/components/Button";
-import { useSession } from "next-auth/react";
+import ErrorPage from "next/error";
+import Head from "next/head";
+import { IconHoverEffect } from "~/components/IconHoverEffect";
+import { InfiniteTweetList } from "~/components/InfiniteTweetList";
+import Link from "next/link";
+import { ProfileImage } from "~/components/ProfileImage";
+import { VscArrowLeft } from "react-icons/vsc";
+import { api } from "~/utils/api";
+import { ssgHelper } from "~/server/api/ssgHelper";
 import { useContext } from "react";
+import { useSession } from "next-auth/react";
+
 const ProfilePage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
   id,
 }) => {

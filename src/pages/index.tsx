@@ -40,7 +40,7 @@ const Home: NextPage = () => {
   );
 };
 
-function Following() {
+export function Following() {
   const tweets = api.tweet.infiniteFeed.useInfiniteQuery(
     { onlyFollowing: true },
     { getNextPageParam: (lastPage) => lastPage.nextCursor }
@@ -56,6 +56,7 @@ function Following() {
     />
   );
 }
+
 function RecentTweets() {
   const tweets = api.tweet.infiniteFeed.useInfiniteQuery(
     {},

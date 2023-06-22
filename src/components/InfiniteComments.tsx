@@ -7,7 +7,7 @@ import { IconHoverEffect } from "./IconHoverEffect";
 import { api } from "~/utils/api";
 import { LoadingSpinner } from "./LoadingSpinner";
 
-type Tweet = {
+type Comment = {
   id: string;
   content: string;
   createdAt: Date;
@@ -16,38 +16,38 @@ type Tweet = {
   user: { id: string; image: string | null; name: string | null };
 };
 type InfiniteListPropps = {
-  tweets?: Tweet[];
+  comments?: Comment[];
   isError: boolean;
   isLoading: boolean;
   hasMore: boolean | undefined;
-  fetchNewTweets: () => Promise<unknown>;
+  fetchNewComments: () => Promise<unknown>;
 };
-export function InfiniteTweetList({
-  tweets,
+export function InfiniteCommentList({
+  comments,
   isError,
   isLoading,
-  fetchNewTweets,
+  fetchNewComments,
   hasMore = false,
 }: InfiniteListPropps) {
   if (isError) return <h1>Error...</h1>;
   if (isLoading) return <LoadingSpinner />;
 
-  if (tweets == null || tweets?.length === 0) {
+  if (comments == null || comments?.length === 0) {
     return (
-      <h2 className="my-4 text-center text-2xl text-gray-500">No Tweets</h2>
+      <h2 className="my-4 text-center text-2xl text-gray-500">No Comments</h2>
     );
   }
 
   return (
     <ul>
       <InfiniteScroll
-        dataLength={tweets.length}
-        next={fetchNewTweets}
+        dataLength={comments.length}
+        next={fetchNewComments}
         hasMore={hasMore}
         loader={<LoadingSpinner />}
       >
-        {tweets.map((tweet) => (
-          <TweetCard key={tweet.id} {...tweet} />
+        {comments.map((comment) => (
+          <CommentCard key={comment.id} {...comment} />
         ))}
       </InfiniteScroll>
     </ul>
@@ -56,19 +56,19 @@ export function InfiniteTweetList({
 const dateTimeFormater = new Intl.DateTimeFormat(undefined, {
   dateStyle: "short",
 });
-function TweetCard({
+function CommentCard({
   id,
   content,
   createdAt,
   likeCount,
   likedByMe,
   user,
-}: Tweet) {
+}: Comment) {
   const trpcUtils = api.useContext();
-  const toggleLike = api.tweet.toggleLike.useMutation({
+  const toggleLike = api.comment.toggleLike.useMutation({
     onSuccess: ({ addedLike }) => {
       const updater: Parameters<
-        typeof trpcUtils.tweet.infiniteFeed.setInfiniteData
+        typeof trpcUtils.comment.infiniteFeed.setInfiniteData
       >[1] = (oldData) => {
         if (oldData == null) return;
         const countModifier = addedLike ? 1 : -1;
@@ -77,26 +77,26 @@ function TweetCard({
           pages: oldData.pages.map((page) => {
             return {
               ...page,
-              tweets: page.tweets.map((tweet) => {
-                if (tweet.id === id) {
+              comments: page.comments.map((comment) => {
+                if (comment.id === id) {
                   return {
-                    ...tweet,
-                    likeCount: tweet.likeCount + countModifier,
+                    ...comment,
+                    likeCount: comment.likeCount + countModifier,
                     likedByMe: addedLike,
                   };
                 }
-                return tweet;
+                return comment;
               }),
             };
           }),
         };
       };
-      trpcUtils.tweet.infiniteFeed.setInfiniteData({}, updater);
-      trpcUtils.tweet.infiniteFeed.setInfiniteData(
+      trpcUtils.comment.infiniteFeed.setInfiniteData({}, updater);
+      trpcUtils.comment.infiniteFeed.setInfiniteData(
         { onlyFollowing: true },
         updater
       );
-      trpcUtils.tweet.infiniteProfileFeed.setInfiniteData(
+      trpcUtils.comment.infiniteProfileFeed.setInfiniteData(
         { userId: user.id },
         updater
       );
