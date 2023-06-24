@@ -1,8 +1,8 @@
 import type {
-  GetStaticPaths,
-  GetStaticPropsContext,
-  InferGetStaticPropsType,
-  NextPage,
+    GetStaticPaths,
+    GetStaticPropsContext,
+    InferGetStaticPropsType,
+    NextPage,
 } from "next";
 
 import { ArticleEditor } from "../CreateArticle";
@@ -12,59 +12,59 @@ import { api } from "~/utils/api";
 import { ssgHelper } from "~/server/api/ssgHelper";
 
 const EditPage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
-  id,
+    id,
 }) => {
-  console.log(id);
+    console.log(id);
 
-  const { data: article } = api.article.getArticleById.useQuery({ id });
+    const { data: article } = api.article.getArticleById.useQuery({ id });
 
-  if (article == null || article.title == null) {
-    return <ErrorPage statusCode={404} />;
-  }
+    if (article == null || article.title == null) {
+        return <ErrorPage statusCode={404} />;
+    }
 
-  return (
-    <>
-      <Head>
-        <title>{`Edit - ${article.title}`}</title>
-      </Head>
-      <ArticleEditor
-        isNew={false}
-        title={article.title}
-        content={article.content}
-        //todo image={article.image}
-        id={id}
-      />
-    </>
-  );
+    return (
+        <>
+            <Head>
+                <title>{`Edit - ${article.title}`}</title>
+            </Head>
+            <ArticleEditor
+                isNew={false}
+                title={article.title}
+                content={article.content}
+                imageId={article.imageId}
+                id={id}
+            />
+        </>
+    );
 };
 
 export const getStaticPaths: GetStaticPaths = () => {
-  return {
-    paths: [],
-    fallback: "blocking",
-  };
+    return {
+        paths: [],
+        fallback: "blocking",
+    };
 };
 
 export async function getStaticProps(
-  context: GetStaticPropsContext<{ id: string }>
+    context: GetStaticPropsContext<{ id: string }>
 ) {
-  const id = context.params?.id;
-  if (id == null) {
-    return {
-      redirect: {
-        destination: "/",
-      },
-    };
-  }
+    const id = context.params?.id;
+    if (id == null) {
+        return {
+            redirect: {
+                destination: "/",
+            },
+        };
+    }
 
-  const ssg = ssgHelper();
-  await ssg.article.getArticleById.prefetch({ id });
-  return {
-    props: {
-      trpcState: ssg.dehydrate(),
-      id,
-    },
-  };
+    const ssg = ssgHelper();
+    await ssg.article.getArticleById.prefetch({ id });
+    return {
+        props: {
+            trpcState: ssg.dehydrate(),
+            id,
+        },
+    };
 }
 
 export default EditPage;

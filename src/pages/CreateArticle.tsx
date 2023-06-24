@@ -1,5 +1,5 @@
 import "@uploadthing/react/styles.css";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { NavBar } from "~/components/NavBar";
 import { api } from "~/utils/api";
@@ -7,15 +7,13 @@ import { redirect } from "next/navigation";
 import { useRouter } from "next/router";
 import type { ChangeEvent } from "react"
 import type { NextPage } from "next";
-import { UploadButton } from "@uploadthing/react";
 import axios from "axios";
-import { warn } from "console";
+import { log } from "util";
 
 const CreateArticle: NextPage = () => {
-    return (
-        <>
-            <ArticleEditor />
-        </>
+    return (<>
+        <ArticleEditor />
+    </>
     );
 };
 
@@ -38,45 +36,76 @@ export function TitleAndAction({
 type ArticleEditorProps = {
     isNew?: boolean;
     title?: string;
-    image?: string;
+    imageId?: string;
     content?: string;
     id?: string;
 };
 export function ArticleEditor({
     isNew = true,
     title = "",
-    image = "",
+    imageId = "",
     content = "",
     id,
 }: ArticleEditorProps) {
     //hooks
-    const [putUrls, setPutUrls] = useState<{ url: string, key: string }[]>()
-    const [getUrls, setGetUrls] = useState<{ url: string, key: string }[]>()
+    useEffect(() => {
+        createPresignedGetUrls.mutate({ keys: [imageId] })
+        console.log('this is useEffect creating a get img url', articleImageSrc);
+
+    }, [])
+    const [formData, setFormData] = useState({
+        title: title,
+        imageId: imageId,
+        content: content,
+    });
+    const [hasImage, setHasImage] = useState(!isNew)
+
+    const createPresignedDeleteUrls = api.article.createPresignedUrlsDelete.useMutation({
+        onSuccess(data) {
+            console.log(data)
+        },
+    })
+
     const createPresignedGetUrls = api.article.createPresignedUrlsGet.useMutation({
         onSuccess(data) {
             console.log('list of presigned get urls recieved', data)
-            setGetUrls(data)
+            if (!(data && data[0] && data[0].key)) return
+            setArticleImageSrc(data[0].url)
+            console.log('setting the image key in the form')
+            setHasImage(true)
+            setFormData((prevFormData) => {
+                if (!(data[0] && data[0].key)) return { ...prevFormData }
+                return {
+                    ...prevFormData,
+                    imageId: data[0].key,
+                }
+            });
         },
     })
+
     const createPresignedPutUrls = api.article.createPresignedUrlsPut.useMutation({
-        onSuccess(data) {
+        async onSuccess(data) {
             console.log('list of presigned put urls recieved', data)
-            setPutUrls(data)
+            if (!(testInputRef.current && testInputRef.current.files && testInputRef.current.files[0])) return
+            const testFile = testInputRef.current.files[0]
+            if (!testFile) return
+            console.log('putUrls set', data)
+            if (!(data && data[0])) return console.log('something is null or undefined', data, data[0])
+            console.log('shooting a req to upload imgae')
+            await axios.put(data[0].url, testFile, {
+                headers: {
+                    'Content-Type': 'image/jpeg',
+                },
+            })
+            console.log('about to shoot request for get obj urls')
+            await createPresignedGetUrls.mutateAsync({ keys: data.map(x => x.key) })
+            console.log('about to shoot request for get obj urls')
+            console.log('submititng form');
         },
     })
-    const [signedUrl, setSignetUrl] = useState<string>()
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const [file, setFile] = useState<unknown>()
-    const [imgFile, setImgFile] = useState<File>()
+    const [articleImageSrc, setArticleImageSrc] = useState<string>('')
     const router = useRouter();
-    const inputRef = useRef<HTMLInputElement>(null);
-    const [imgSrc, setImgSrc] = useState<string>(image);
-    const [hasImage, setHasImage] = useState(false);
-    const [formData, setFormData] = useState({
-        title: title,
-        image: image,
-        content: content,
-    });
+
 
     const handleInputChange = (
         event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -87,63 +116,62 @@ export function ArticleEditor({
             [name]: value,
         }));
     };
-    const handleUploadImageButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-        e.preventDefault();
-        inputRef.current && inputRef.current.click();
-    };
 
     const createArticle = api.article.create.useMutation({
         async onSuccess() {
             console.log("article created");
             setFormData({
                 title: "",
-                image: "",
+                imageId: "",
                 content: "",
             });
             await router.push("/blog");
         },
     });
+
     const updateArticle = api.article.update.useMutation({
-        onSuccess() {
+        async onSuccess() {
             console.log("article updated");
             setFormData({
                 title: "",
-                image: "",
+                imageId: "",
                 content: "",
             });
-            redirect("/MyArticles");
+            await router.push('/MyArticles')
         },
     });
-    const uploadImage = api.s3.upload.useMutation({ onSuccess() { console.log('server got the image') } })
 
     const testInputRef = useRef<HTMLInputElement>(null)
     const triggerHiddenInputFileElement = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault()
         testInputRef.current && testInputRef.current.click()
     }
-    const mockHandleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const formData2 = new FormData()
-        formData2.append('file', 'file')
-        if (!(putUrls && putUrls[0])) return
-        await axios.put(putUrls[0].url, file, {
-            headers: {
-                'Content-Type': 'image/jpeg',
-            },
-        })
-        await createPresignedGetUrls.mutateAsync({ keys: putUrls.map(x => x.key) })
 
-        console.log('submititng form');
+    const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+        console.log(formData)
+        if (formData.imageId.length > 0) {
+            console.log('testing the hadnle delete condition', (!(formData.imageId.length > 0)));
+
+            const response = await createPresignedDeleteUrls.mutateAsync({ keys: [formData.imageId] })
+            if (response.Errors) return console.error('could not delete previous image', response.Errors);
+        }
+        console.log('files to be send', e.target.files)
+        if (!(e.target.files && e.target.files[0])) return
+        createPresignedPutUrls.mutate({ count: 1 })
     }
 
-    const getSignedUrl = () => {
-        createPresignedPutUrls.mutate({ count: 1 })
-    };
-
-    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-        if (!(e.target.files && e.target.files[0])) return
-        getSignedUrl()
-        setFile(e.target.files[0]); console.log('image selected', imgFile)
+    const handleDeleteImage = async (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault()
+        console.log('start delete function');
+        const response = await createPresignedDeleteUrls.mutateAsync({ keys: [formData.imageId] })
+        if (response.Errors) return console.error('could not delete the  image', response.Errors);
+        setHasImage(false)
+        setFormData((prevFormData) => {
+            return {
+                ...prevFormData,
+                imageId: '',
+            }
+        });
     }
 
     return (
@@ -152,17 +180,11 @@ export function ArticleEditor({
             <div className="max-w-4xl">
                 <form
                     className='flex flex-col'
-                    onSubmit={(e) => { mockHandleSubmit(e).catch((e) => console.log(e)); }}
                 >
                     <div>Image Test</div>
                     <div>impage - preview</div>
-                    <input type="file" accept="image/*" ref={testInputRef}
-                        name='upload file'
-                        onClick={() => { console.log('brawsing for image') }}
-                        onChange={(e) => { handleFileChange(e) }} />
-                    <button type='button' name="browse"
-                        onClick={(e) => { console.log('trigger hidden input file element'); triggerHiddenInputFileElement(e) }}
-                    >Upload Image</button>
+
+
                     <button type='submit'
                         onClick={() => { console.log('special action'); }}
                     >submit test form</button>
@@ -193,25 +215,36 @@ export function ArticleEditor({
                     />
 
                     <div className="mt-8 border">Featured image</div>
-                    {hasImage ? (
-                        <Image src={imgSrc} alt="blog image" width={112} height={74} />
-                    ) : null}
-                    <input
+                    <input type="file" accept="image/*"
+                        ref={testInputRef}
                         hidden
-                        type="file"
-                        name="image"
-                        id="file"
-                        value={formData.image}
-                        style={{ display: "none" }}
-                        onChange={handleInputChange}
-                        ref={inputRef}
+                        name='upload file'
+                        onClick={() => { console.log('brawsing for image') }}
+                        onChange={(e) => { handleFileChange(e).catch(err => console.error(err)) }}
                     />
-                    <button
-                        className="mt-2 h-9 rounded bg-gray-500 px-3 text-white"
-                        onClick={handleUploadImageButtonClick}
-                    >
-                        Upload an Image
-                    </button>
+                    {hasImage ? (
+                        <>
+                            <Image src={articleImageSrc} width={112} height={74} alt="article image" />
+                            <div className="flex gap-2 mt-2 items-center">
+                                <button className='text-blue-600'
+                                    type='button'
+                                    name='browse'
+                                    onClick={(e) => { console.log('trigger hidden input file element'); triggerHiddenInputFileElement(e) }}
+                                >Upload new </button>
+                                <div className="border-stone-300 border-l w-px h-4" />
+                                <button className='text-red-500'
+                                    onClick={(e) => { handleDeleteImage(e).catch(err => console.error(err)) }}
+                                >Delete</button>
+                            </div>
+                        </>) : (
+
+                        <button
+                            className="mt-2 h-9 rounded bg-gray-500 px-3 text-white"
+                            onClick={(e) => { console.log('trigger hidden input file element'); triggerHiddenInputFileElement(e) }}
+                        >
+                            Upload an Image
+                        </button>)
+                    }
                     <div className="">
                     </div>
                     <div className="mt-10 border">Content</div>

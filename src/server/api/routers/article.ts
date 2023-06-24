@@ -7,9 +7,23 @@ import {
 import { z } from "zod";
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { s3Client } from '~/server/s3';
-import { PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { PutObjectCommand, GetObjectCommand, DeleteObjectsCommand } from '@aws-sdk/client-s3';
 
 export const articleRouter = createTRPCRouter({
+
+    createPresignedUrlsDelete: protectedProcedure
+        .input(z.object({ keys: z.array(z.string()) }))
+        .mutation(async ({ input }) => {
+            const Objects = input.keys.map(x => ({ Key: x }))
+            const deleteCommand = new DeleteObjectsCommand({
+                Bucket: process.env.AWS_BUCKET_NAME,
+                Delete: {
+                    Objects
+                }
+            })
+            const response = await s3Client.send(deleteCommand)
+            return response
+        }),
 
     createPresignedUrlsGet: protectedProcedure
         .input(z.object({ keys: z.array(z.string()) }))
@@ -44,7 +58,7 @@ export const articleRouter = createTRPCRouter({
                     new PutObjectCommand({
                         Bucket: process.env.AWS_BUCKET_NAME,
                         Key: key,
-                        ContentType: 'image/jpeg'
+                        ContentType: 'imageId/jpeg'
                     })
                 );
                 urls.push({
@@ -65,7 +79,7 @@ export const articleRouter = createTRPCRouter({
                     title: true,
                     content: true,
                     user: { select: { name: true } },
-                    image: true,
+                    imageId: true,
                     createdAt: true,
                     perex: true,
                     comments: true,
@@ -73,26 +87,37 @@ export const articleRouter = createTRPCRouter({
                 },
             });
             if (article == null) return;
+            const url = await getSignedUrl(
+                s3Client,
+                new GetObjectCommand({
+                    Bucket: process.env.AWS_BUCKET_NAME,
+                    Key: article.imageId,
+                })
+            )
+
             return {
                 ...article,
+                imageUrl: url
             };
+
         }),
+
     update: protectedProcedure
         .input(
             z.object({
                 id: z.string(),
                 content: z.string(),
                 title: z.string(),
-                image: z.string(),
+                imageId: z.string(),
             })
         )
-        .mutation(async ({ input: { id, content, image, title }, ctx }) => {
+        .mutation(async ({ input: { id, content, imageId, title }, ctx }) => {
             await ctx.prisma.article.update({
                 where: { id },
                 data: {
                     title,
                     content,
-                    image,
+                    imageId,
                 },
             });
         }),
@@ -103,13 +128,13 @@ export const articleRouter = createTRPCRouter({
         }),
     create: protectedProcedure
         .input(
-            z.object({ content: z.string(), title: z.string(), image: z.string() })
+            z.object({ content: z.string(), title: z.string(), imageId: z.string() })
         )
-        .mutation(async ({ input: { title, content, image }, ctx }) => {
+        .mutation(async ({ input: { title, content, imageId }, ctx }) => {
             const article = await ctx.prisma.article.create({
                 data: {
                     title,
-                    image,
+                    imageId,
                     content,
                     userId: ctx.session.user.id,
                     perex: content,
@@ -140,22 +165,42 @@ export const articleRouter = createTRPCRouter({
             });
             return data;
         }),
-    getArticles: publicProcedure.query(async ({ ctx }) => {
-        const data = ctx.prisma.article.findMany({
-            take: 100,
-            select: {
-                id: true,
-                title: true,
-                image: true,
-                perex: true,
-                content: true,
-                user: { select: { name: true } },
-                createdAt: true,
-                _count: { select: { comments: true } },
-                comments: true,
-            },
-            orderBy: { createdAt: "desc" },
-        });
-        return data;
-    }),
-});
+
+    getArticles: publicProcedure.
+        query(async ({ ctx }) => {
+            const data = await ctx.prisma.article.findMany({
+                take: 100,
+                select: {
+                    id: true,
+                    title: true,
+                    imageId: true,
+                    perex: true,
+                    content: true,
+                    user: { select: { name: true } },
+                    createdAt: true,
+                    _count: { select: { comments: true } },
+                },
+                orderBy: { createdAt: "desc" },
+            });
+            console.log('data', data);
+
+            if (data.length == 0) return []
+
+            const dataWithSignedImgUrls = await Promise.all(
+                data.map(async (x) => {
+                    const key = x.imageId
+                    const url = await getSignedUrl(
+                        s3Client,
+                        new GetObjectCommand({
+                            Bucket: process.env.AWS_BUCKET_NAME,
+                            Key: key,
+                        })
+                    )
+                    return { ...x, imageUrl: url };
+                })
+            )
+
+            return dataWithSignedImgUrls
+        })
+})
+
