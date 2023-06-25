@@ -64,19 +64,32 @@ export const commentRouter = createTRPCRouter({
             return comment;
         }),
     toggleVote: protectedProcedure
-        .input(z.object({ id: z.string() }))
-        .mutation(async ({ input: { id }, ctx }) => {
+        .input(z.object({ id: z.string(), votedUp: z.boolean() }))
+        .mutation(async ({ input: { id, votedUp }, ctx }) => {
             const data = { commentId: id, userId: ctx.session.user.id };
-            const existingVote = await ctx.prisma.vote.findUnique({
-                where: { userId_commentId: data },
-            });
-            if (existingVote == null) {
-                await ctx.prisma.vote.create({ data });
-                return { addedVote: true };
-            } else {
-                await ctx.prisma.vote.delete({ where: { userId_commentId: data } });
-                return { addedVote: false };
+            const existingVote =
+                await ctx.prisma.upVote.findUnique({
+                    where: { userId_commentId: data },
+                }) ||
+                await ctx.prisma.downVote.findUnique({
+                    where: { userId_commentId: data },
+                });
+
+            if (existingVote == null && votedUp) {
+                await ctx.prisma.upVote.create({ data })
+                return { addedUpVote: true, addedDownVote: false, votedUp };
             }
+            if (existingVote == null && !votedUp) {
+                await ctx.prisma.downVote.create({ data })
+                return { addedUpVote: false, addedDownVote: true, votedUp };
+            }
+            if (existingVote && votedUp) {
+                await ctx.prisma.upVote.delete({ where: { userId_commentId: data } })
+            }
+            if (existingVote && !votedUp) {
+                await ctx.prisma.downVote.delete({ where: { userId_commentId: data } });
+            }
+            return { addedUpVote: false, addedDownVote: false, votedUp };
         }),
 });
 
@@ -106,8 +119,10 @@ async function getInfiniteComments({
             id: true,
             createdAt: true,
             content: true,
-            _count: { select: { votes: true } },
-            votes:
+            _count: { select: { upVotes: true, downVotes: true } },
+            downVotes:
+                currentUserId == null ? false : { where: { userId: currentUserId } },
+            upVotes:
                 currentUserId == null ? false : { where: { userId: currentUserId } },
             user: {
                 select: {
@@ -135,8 +150,10 @@ async function getInfiniteComments({
             content: comment.content,
             createdAt: comment.createdAt,
             user: comment.user,
-            voteCount: comment._count.votes,
-            votedByMe: comment.votes?.length > 0,
+            sumVotes: comment._count.upVotes - comment._count.downVotes,
+            upVotedByMe: comment.upVotes.length > 0,
+            downVotedByMe: comment.downVotes.length > 0,
+
         })),
         nextCursor,
     };

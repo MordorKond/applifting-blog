@@ -14,7 +14,7 @@ datasource db {
 model Tweet {
     id        String   @id @default(uuid())
     userId    String
-    content   String
+    content   String    
     createdAt DateTime @default(now())
     user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
     likes     Like[]
@@ -25,7 +25,7 @@ model Tweet {
 model Article {
     id        String   @id @default(uuid())
     userId    String
-    content   String
+    content   String  @db.LongText
     title     String
     perex     String
     imageId     String
@@ -43,7 +43,8 @@ model Comment {
     userId      String
     articleId   String
     content     String
-    votes       Vote[]
+    upVotes     UpVote[]
+    downVotes   DownVote[]
     createdAt   DateTime    @default(now())
     article     Article @relation(fields: [articleId],references: [id],onDelete: Cascade)
     user        User    @relation(fields: [userId],references: [id],onDelete: Cascade)
@@ -52,10 +53,19 @@ model Comment {
     @@index([userId])
     @@unique([createdAt,id])
 }
-model Vote {
+model UpVote {
     userId String
     commentId String
-    // upVote    Boolean
+    user User @relation(fields: [userId], references: [id],onDelete: Cascade)
+    comment Comment @relation(fields: [commentId], references: [id],onDelete: Cascade)
+
+    @@id([userId,commentId])
+    @@index([userId])
+    @@index([commentId])
+}
+model DownVote {
+    userId String
+    commentId String
     user User @relation(fields: [userId], references: [id],onDelete: Cascade)
     comment Comment @relation(fields: [commentId], references: [id],onDelete: Cascade)
 
@@ -117,7 +127,8 @@ model User {
     tweets        Tweet[]
     articles      Article[]
     comments      Comment[]
-    votes         Vote[]
+    upVotes       UpVote[]
+    downVotes     DownVote[]
     likes         Like[]
     followers     User[] @relation(name:"Followers")
     follows       User[] @relation(name:"Followers")

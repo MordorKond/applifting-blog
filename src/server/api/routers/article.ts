@@ -166,10 +166,13 @@ export const articleRouter = createTRPCRouter({
             return data;
         }),
 
-    getArticles: publicProcedure.
-        query(async ({ ctx }) => {
+    getArticles: publicProcedure
+        .input(z.object({ take: z.number(), except: z.array(z.string()) }).optional())
+        .query(async ({ input, ctx }) => {
+            const take = input ? input.take : 100
+            const blacklist = input ? input.except : []
             const data = await ctx.prisma.article.findMany({
-                take: 100,
+                take: take || 100,
                 select: {
                     id: true,
                     title: true,
@@ -180,6 +183,7 @@ export const articleRouter = createTRPCRouter({
                     createdAt: true,
                     _count: { select: { comments: true } },
                 },
+                where: { id: { notIn: blacklist } },
                 orderBy: { createdAt: "desc" },
             });
             console.log('data', data);

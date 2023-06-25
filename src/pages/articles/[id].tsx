@@ -6,7 +6,7 @@ import type {
     NextPage,
 } from "next";
 
-import { ArticleCardProps } from "~/components/ArticleCard";
+import type { ArticleCardProps } from "~/components/ArticleCard";
 import { Button } from "~/components/Button";
 import ErrorPage from "next/error";
 import Image from "next/image";
@@ -15,12 +15,12 @@ import { LoadingSpinner } from "~/components/LoadingSpinner";
 import { NavBar } from "~/components/NavBar";
 import { VscAccount } from "react-icons/vsc";
 import { api } from "~/utils/api";
-import catSrc from "images/cat1.svg";
 import circleSrc from "images/circle.svg";
 import downVoteIcon from "images/chevron-Down.svg";
 import { ssgHelper } from "~/server/api/ssgHelper";
 import upVoteIcon from "images/chevron-up.svg";
 import { useSession } from "next-auth/react";
+import ReactMarkdown from 'react-markdown'
 
 const ArticlePage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
     id,
@@ -52,38 +52,32 @@ const ArticlePage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
                     fullText={article.content}
                     commentsCount={article._count.comments}
                 />
-                <SideArticlesList />
+                <SideArticlesList mainArticleId={article.id} />
             </main>
         </>
     );
 };
 
-function SideArticlesList() {
+function SideArticlesList({ mainArticleId }: { mainArticleId: string }) {
+    const { data: sideArticles } = api.article.getArticles.useQuery({ take: 5, except: [mainArticleId] })
+    console.log('side articles', sideArticles)
+    if (!sideArticles || sideArticles.length == 0) return null
     return (
         <div className="sticky top-16 h-fit max-w-sm border-l">
             <div className="flex flex-col pl-6 ">
                 <h1 className="mb-8 border text-2xl">Related Articles</h1>
                 <ul className="flex flex-col gap-y-6 border">
-                    <li>
-                        <h6 className="mb-2 border text-base font-medium">
-                            Wet vs. Dry Cat Food: Which is Better?
-                        </h6>
-                        <div className=" font-normal text-neutral-800">
-                            A cat's whiskers — or vibrissae — are a well-honed sensory tool
-                            that helps a cat see in the dark and steer clear of hungry
-                            predators. Whiskers are highly ...
-                        </div>
-                    </li>
-                    <li>
-                        <h6 className="mb-2 border text-base font-medium">
-                            Wet vs. Dry Cat Food: Which is Better?
-                        </h6>
-                        <div className=" font-normal text-neutral-800">
-                            A cat's whiskers — or vibrissae — are a well-honed sensory tool
-                            that helps a cat see in the dark and steer clear of hungry
-                            predators. Whiskers are highly ...
-                        </div>
-                    </li>
+                    {sideArticles.map(article => {
+                        return (<li key={article.id}>
+                            <h6 className="mb-2 border text-base font-medium">
+                                {article.title}
+                            </h6>
+                            <div className=" font-normal text-neutral-800">
+                                {article.perex}
+                            </div>
+
+                        </li>)
+                    })}
                 </ul>
             </div>
         </div>
@@ -96,7 +90,8 @@ function Article(article: ArticleCardProps) {
     //? we might have to use a hook for that ....
     //todo font family halvetica neu
     //todo ?
-
+    if (!article.fullText) article.fullText = ''
+    const fullText = article.fullText
     return (
         <>
             <div className="grid max-w-3xl grid-cols-1 gap-6 border">
@@ -110,9 +105,12 @@ function Article(article: ArticleCardProps) {
                     </div>
                 </div>
                 <Image src={article.imageUrl} alt="face of a cat" width={760} height={504} className="w-full" />
-                <div className=" border-b border-neutral-200 pb-10 text-base">
+                <p className="whitespace-pre-wrap border-b border-neutral-200 pb-10 text-base">
                     {article.fullText}
-                </div>
+                </p>
+                <ReactMarkdown >
+                    {fullText}
+                </ReactMarkdown>
                 {/* <div className="h-10 border-b border-neutral-200"></div> */}
                 {/* comments count */}
                 <div className="border text-xl">
@@ -133,10 +131,10 @@ export function ArticleComments({ articleId }: { articleId: string }) {
         { articleId },
         { getNextPageParam: (lastPage) => lastPage.nextCursor }
     );
+    console.log('comments', comments);
 
     return (
         <>
-            <div>{"test"}</div>
             <InfiniteCommentList
                 comments={comments.data?.pages.flatMap((page) =>
                     page.comments.map((comment) => ({ ...comment, articleId }))
@@ -154,8 +152,9 @@ type Comment = {
     id: string;
     content: string;
     createdAt: Date;
-    voteCount: number;
-    votedByMe: boolean;
+    sumVotes: number;
+    upVotedByMe: boolean;
+    downVotedByMe: boolean;
     user: { id: string; image: string | null; name: string | null };
 };
 type InfinateListPropps = {
@@ -223,8 +222,9 @@ function CommentForm({
                     if (oldData == null || oldData.pages[0] == null) return;
                     const newCachedComment = {
                         ...newComment,
-                        voteCount: 0,
-                        votedByMe: false,
+                        sumVotes: 0,
+                        upVotedByMe: false,
+                        downVotedByMe: false,
                         user: {
                             id: session.data.user.id,
                             name: session.data.user.name || null,
@@ -280,18 +280,18 @@ function CommentCard({
     id,
     content,
     createdAt,
-    voteCount,
-    votedByMe,
+    sumVotes,
+    upVotedByMe,
+    downVotedByMe,
     user,
 }: Comment) {
     const trpcUtils = api.useContext();
     const toggleVote = api.comment.toggleVote.useMutation({
-        onSuccess: ({ addedVote }) => {
+        onSuccess: ({ addedDownVote, addedUpVote }) => {
             const updater: Parameters<
                 typeof trpcUtils.comment.infiniteFeed.setInfiniteData
             >[1] = (oldData) => {
                 if (oldData == null) return;
-                const countModifier = addedVote ? 1 : -1;
                 return {
                     ...oldData,
                     pages: oldData.pages.map((page) => {
@@ -301,8 +301,9 @@ function CommentCard({
                                 if (comment.id != id) return comment;
                                 return {
                                     ...comment,
-                                    voteCount: comment.voteCount + countModifier,
-                                    votedByMe: addedVote,
+                                    sumVotes: comment.sumVotes + ((comment.upVotedByMe && addedDownVote) ? -2 : (comment.downVotedByMe && addedUpVote) ? +2 : addedUpVote ? +1 : -1),
+                                    upVotedByMe: addedUpVote,
+                                    downVotedByMe: addedDownVote,
                                 };
                             }),
                         };
@@ -316,8 +317,11 @@ function CommentCard({
             });
         },
     });
-    function handleToggleVote() {
-        toggleVote.mutate({ id });
+    function handleToggleUpVote() {
+        toggleVote.mutate({ id, votedUp: true });
+    }
+    function handleToggleDownVote() {
+        toggleVote.mutate({ id, votedUp: false });
     }
     return (
         <li className="flex flex-col border text-neutral-800 ">
@@ -332,21 +336,33 @@ function CommentCard({
                     </div>
                     <div className="pb-2">{content}</div>
                     <div className="flex ">
-                        <div className="">{voteCount}</div>
+                        <div className="">{sumVotes}</div>
                         <div className="flex items-center">
                             <div className="mx-2 h-4 w-px border-l"></div>
                             <button
-                                onClick={handleToggleVote}
+                                name="upvote"
+                                onClick={handleToggleUpVote}
                                 disabled={toggleVote.isLoading}
                                 className={
-                                    toggleVote.data?.addedVote ? "rounded-full bg-orange-300" : ""
+                                    upVotedByMe ?
+                                        "rounded-full bg-orange-300" : ""
                                 }
                             >
                                 <Image src={upVoteIcon} alt="up vote icon" className=" " />
                             </button>
                             <div className="mx-2 h-4 w-px border-l"></div>
 
-                            <Image src={downVoteIcon} alt="down vote icon" className="" />
+                            <button
+                                name="downvote"
+                                onClick={handleToggleDownVote}
+                                disabled={toggleVote.isLoading}
+                                className={
+                                    downVotedByMe ?
+                                        "rounded-full bg-orange-300" : ""
+                                }
+                            >
+                                <Image src={downVoteIcon} alt="down vote icon" className="" />
+                            </button>
                             <div className="mx-2 h-4 w-px border-l"></div>
                         </div>
                     </div>

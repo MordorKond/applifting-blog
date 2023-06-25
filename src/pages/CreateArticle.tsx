@@ -3,12 +3,11 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { NavBar } from "~/components/NavBar";
 import { api } from "~/utils/api";
-import { redirect } from "next/navigation";
 import { useRouter } from "next/router";
 import type { ChangeEvent } from "react"
 import type { NextPage } from "next";
 import axios from "axios";
-import { log } from "util";
+import ReactMarkdown from 'react-markdown'
 
 const CreateArticle: NextPage = () => {
     return (<>
@@ -173,22 +172,18 @@ export function ArticleEditor({
             }
         });
     }
+    const [md, setMd] = useState('hi')
+    const handleMD = (e: ChangeEvent<HTMLTextAreaElement>) => {
+        e.preventDefault()
+        const text = e.target.value
+        if (text.length > 0) return setMd(text)
+        setMd(' ')
 
+    }
     return (
         <>
             <NavBar />
             <div className="max-w-4xl">
-                <form
-                    className='flex flex-col'
-                >
-                    <div>Image Test</div>
-                    <div>impage - preview</div>
-
-
-                    <button type='submit'
-                        onClick={() => { console.log('special action'); }}
-                    >submit test form</button>
-                </form>
                 <form
                     onSubmit={(e) => {
                         e.preventDefault();
