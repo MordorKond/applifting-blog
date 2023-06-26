@@ -27,11 +27,12 @@ export function ArticleCard(article: ArticleCardProps) {
     return (
         <div className="flex border">
             <Image
+                objectFit="cover"
                 width={272}
-                height={272}
+                height={244}
                 src={article.imageUrl}
                 alt="face of a cat"
-                className=""
+                className="object-cover"
             />
             <div className="ml-6 max-w-xl flex-grow border">
                 <h4 className="border  text-2xl font-medium">{article.title}</h4>

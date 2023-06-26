@@ -137,7 +137,7 @@ export const articleRouter = createTRPCRouter({
                     imageId,
                     content,
                     userId: ctx.session.user.id,
-                    perex: content,
+                    perex: content.slice(0, 250 - 3).split(' ').map((x, i) => !content.split(' ')[i + 1] ? '...' : x).join(' ')
                 },
             });
 

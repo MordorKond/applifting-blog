@@ -63,13 +63,13 @@ function SideArticlesList({ mainArticleId }: { mainArticleId: string }) {
     console.log('side articles', sideArticles)
     if (!sideArticles || sideArticles.length == 0) return null
     return (
-        <div className="sticky top-16 h-fit max-w-sm border-l">
+        <div className="hidden lg:inline sticky top-16 h-fit max-w-sm border-l">
             <div className="flex flex-col pl-6 ">
-                <h1 className="mb-8 border text-2xl">Related Articles</h1>
-                <ul className="flex flex-col gap-y-6 border">
+                <h1 className="mb-8  text-2xl">Related Articles</h1>
+                <ul className="flex flex-col gap-y-6 ">
                     {sideArticles.map(article => {
                         return (<li key={article.id}>
-                            <h6 className="mb-2 border text-base font-medium">
+                            <h6 className="mb-2  text-base font-medium">
                                 {article.title}
                             </h6>
                             <div className=" font-normal text-neutral-800">
@@ -94,26 +94,26 @@ function Article(article: ArticleCardProps) {
     const fullText = article.fullText
     return (
         <>
-            <div className="grid max-w-3xl grid-cols-1 gap-6 border">
+            <div className="grid max-w-3xl grid-cols-1 gap-6 ">
                 {/* article */}
-                <h1 className="border  text-4xl font-medium">{article.title}</h1>
-                <div className="flex border  text-sm text-gray-500">
-                    <div className="t border">{article.author}</div>
+                <h1 className=" text-4xl font-medium">{article.title}</h1>
+                <div className="flex   text-sm text-gray-500">
+                    <div className="t ">{article.author}</div>
                     <Image src={circleSrc} alt="circle" className="mx-3" />
-                    <div className="t border">
+                    <div className="t ">
                         {dateTimeFormater.format(article.date)}
                     </div>
                 </div>
-                <Image src={article.imageUrl} alt="face of a cat" width={760} height={504} className="w-full" />
-                <p className="whitespace-pre-wrap border-b border-neutral-200 pb-10 text-base">
+                <Image src={article.imageUrl} alt="face of a cat" width={760} height={504} />
+                <p className="whitespace-pre-wrap border-b -neutral-200 pb-10 text-base">
                     {article.fullText}
                 </p>
                 <ReactMarkdown >
                     {fullText}
                 </ReactMarkdown>
-                {/* <div className="h-10 border-b border-neutral-200"></div> */}
+                {/* <div className="h-10 -b -neutral-200"></div> */}
                 {/* comments count */}
-                <div className="border text-xl">
+                <div className=" text-xl">
                     {getPlural(article.commentsCount, "Comment", " Comments")}{" "}
                     {`(${article.commentsCount})`}
                 </div>
@@ -182,6 +182,7 @@ function InfiniteCommentList({
     return (
         <ul>
             <InfiniteScroll
+                className="flex flex-col gap-5"
                 dataLength={comments.length}
                 next={fetchNewComments}
                 hasMore={hasMore}
@@ -205,6 +206,7 @@ function CommentForm({
     const [comment, setComment] = useState("");
     const trpcUtils = api.useContext();
     const session = useSession();
+
     const createComment = api.comment.create.useMutation({
         onSuccess(newComment) {
             if (session.status != "authenticated") return;
@@ -250,10 +252,11 @@ function CommentForm({
         e.preventDefault();
         createComment.mutate({ content: comment, articleId: articleId });
     }
+    if (!(session.data && session.status === 'authenticated')) return null
     return (
-        <form onSubmit={handleSubmit} className="flex flex-row border ">
+        <form onSubmit={handleSubmit} className="flex flex-row  ">
             <div className="flex flex-grow gap-6">
-                <ProfileImage />
+                <ProfileImage src={session.data.user.image || undefined} />
                 <input
                     // ref={inputRef}
                     // style={{ height: 0 }}
@@ -263,9 +266,7 @@ function CommentForm({
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
                 ></input>
-                <Button type="submit" gray className="self-end">
-                    Comment
-                </Button>
+
             </div>
         </form>
     );
@@ -333,13 +334,15 @@ function CommentCard({
         toggleVote.mutate({ id, votedUp: false });
     }
     return (
-        <li className="flex flex-col border text-neutral-800 ">
+        <li className="flex flex-col  text-neutral-800 ">
             <div className="flex gap-6">
-                <ProfileImage src={user.image || undefined} />
-                <div className="flex-col-1  gap-y-2 border">
-                    <div className="flex gap-2 border pb-2">
-                        <div className="border text-base font-bold">{user.name}</div>
-                        <div className="border text-base  text-gray-500">
+                <div>
+                    <ProfileImage src={user.image || undefined} />
+                </div>
+                <div className="flex-col-1  gap-y-2 ">
+                    <div className="flex gap-2  pb-2">
+                        <div className=" text-base font-bold">{user.name}</div>
+                        <div className=" text-base  text-gray-500">
                             {dateTimeFormater.format(createdAt)}
                         </div>
                     </div>
@@ -391,7 +394,7 @@ export function ProfileImage({
     //todo:add better alt text => the name if the user
     return (
         <>
-            <div className="h-11 w-11 min-w-max border">
+            <div className=" flex items-center justify-center ">
                 {src == undefined ? (
                     <VscAccount
                         width={44}

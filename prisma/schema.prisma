@@ -25,9 +25,9 @@ model Tweet {
 model Article {
     id        String   @id @default(uuid())
     userId    String
-    content   String  @db.LongText
-    title     String
-    perex     String
+    content   String  @db.VarChar(6000)
+    title     String  @db.VarChar(75)
+    perex     String  @db.VarChar(250)
     imageId     String
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt()
