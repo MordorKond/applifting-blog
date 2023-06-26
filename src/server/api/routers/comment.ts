@@ -67,26 +67,33 @@ export const commentRouter = createTRPCRouter({
         .input(z.object({ id: z.string(), votedUp: z.boolean() }))
         .mutation(async ({ input: { id, votedUp }, ctx }) => {
             const data = { commentId: id, userId: ctx.session.user.id };
-            const existingVote =
+
+            const existingUpVote =
                 await ctx.prisma.upVote.findUnique({
                     where: { userId_commentId: data },
-                }) ||
+                })
+            const existingDownVote =
                 await ctx.prisma.downVote.findUnique({
                     where: { userId_commentId: data },
                 });
-
-            if (existingVote == null && votedUp) {
+            //create
+            if (existingUpVote == null && votedUp) {
                 await ctx.prisma.upVote.create({ data })
+                if (existingDownVote)
+                    await ctx.prisma.downVote.delete({ where: { userId_commentId: data } });
                 return { addedUpVote: true, addedDownVote: false, votedUp };
             }
-            if (existingVote == null && !votedUp) {
+            if (existingDownVote == null && !votedUp) {
                 await ctx.prisma.downVote.create({ data })
+                if (existingUpVote)
+                    await ctx.prisma.upVote.delete({ where: { userId_commentId: data } })
                 return { addedUpVote: false, addedDownVote: true, votedUp };
             }
-            if (existingVote && votedUp) {
+            //delete
+            if (existingUpVote && votedUp) {
                 await ctx.prisma.upVote.delete({ where: { userId_commentId: data } })
             }
-            if (existingVote && !votedUp) {
+            if (existingDownVote && !votedUp) {
                 await ctx.prisma.downVote.delete({ where: { userId_commentId: data } });
             }
             return { addedUpVote: false, addedDownVote: false, votedUp };

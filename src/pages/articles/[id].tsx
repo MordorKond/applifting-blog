@@ -292,6 +292,9 @@ function CommentCard({
                 typeof trpcUtils.comment.infiniteFeed.setInfiniteData
             >[1] = (oldData) => {
                 if (oldData == null) return;
+                console.log('addedDownVote', addedDownVote)
+                console.log('addedUpVote', addedUpVote)
+
                 return {
                     ...oldData,
                     pages: oldData.pages.map((page) => {
@@ -301,7 +304,13 @@ function CommentCard({
                                 if (comment.id != id) return comment;
                                 return {
                                     ...comment,
-                                    sumVotes: comment.sumVotes + ((comment.upVotedByMe && addedDownVote) ? -2 : (comment.downVotedByMe && addedUpVote) ? +2 : addedUpVote ? +1 : -1),
+                                    sumVotes:
+                                        comment.sumVotes + ((
+                                            comment.upVotedByMe && !addedDownVote) ? -1 : (
+                                                comment.upVotedByMe && addedDownVote) ? -2 : (
+                                                    comment.downVotedByMe && !addedUpVote) ? +1 : (
+                                                        comment.downVotedByMe && addedUpVote) ? +2 : (
+                                                            addedUpVote) ? 1 : -1),
                                     upVotedByMe: addedUpVote,
                                     downVotedByMe: addedDownVote,
                                 };

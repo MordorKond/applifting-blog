@@ -198,7 +198,7 @@ export function ArticleEditor({
                         title={isNew ? "Create new article" : "Edit article"}
                         action={"Publish Article"}
                     />
-                    <div className="mt-8 border ">Article Title</div>
+                    <div className="mt-8 ">Article Title</div>
                     <input
                         placeholder="My First Article"
                         type="text"
