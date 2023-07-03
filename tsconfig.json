@@ -17,7 +17,7 @@
     "incremental": true,
     "noUncheckedIndexedAccess": true,
     "baseUrl": ".",
-    "types": ["cypress", "cypress-file-upload"],
+    "types": ["cypress"],
     "paths": {
       "~/*": ["./src/*"]
     }

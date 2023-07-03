@@ -4,9 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { ProfileImage } from "~/pages/articles/[id]";
 import React from "react";
-import arrowSrc from "../../images/Arrow.svg";
-import logoSrc from "../../images/logo.svg";
-import arrowStepper from "../../images/arrow-stepper.svg";
+import ArrowSrc from "../../images/Arrow.svg";
+import LogoSrc from "../../images/logo.svg";
+import ArrowStepper from "../../images/arrow-stepper.svg";
+
+const arrowSrc = ArrowSrc as string
+const logoSrc = LogoSrc as string
+const arrowStepper = ArrowStepper as string
 
 export function NavBar() {
     const session = useSession();

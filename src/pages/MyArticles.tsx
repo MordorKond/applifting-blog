@@ -2,12 +2,15 @@ import type { NextPage } from "next";
 import { NavBar } from "~/components/NavBar";
 import { TitleAndAction } from "./CreateArticle";
 import { api } from "~/utils/api";
-import orderIcon from "images/Union.svg";
 import Image from "next/image";
-import trashImg from "images/trash.svg";
-import penImg from "images/pen.svg";
 import type { ReactNode } from "react";
 import Link from "next/link";
+import OrderIcon from "images/Union.svg";
+import TrashImg from "images/trash.svg";
+import PenImg from "images/pen.svg";
+const orderIcon = OrderIcon as string
+const trashImg = TrashImg as string
+const penImg = PenImg as string
 
 const MyArticles: NextPage = () => {
     return (
@@ -24,12 +27,10 @@ const MyArticles: NextPage = () => {
 
 
 function ArticlesTable() {
-    const trpcUtils = api.useContext();
     const articles = api.article.getProfileArticles.useQuery({ userId: "" });
     const deleteArticle = api.article.delete.useMutation({
         onSuccess: () => {
             //todo Optimise the invalidation
-            const updater = trpcUtils.article.invalidate();
         },
     });
     return (
@@ -104,7 +105,7 @@ interface WrapProps2 {
     className?: string;
 }
 
-const TdWrap: React.FC<WrapProps2> = ({ children, className }) => {
+const TdWrap: React.FC<WrapProps2> = ({ children, className = '' }) => {
     return (
         <td className={`p-3 overflow-hidden text-ellipsis whitespace-nowrap border-b ${className}`}>{
             children

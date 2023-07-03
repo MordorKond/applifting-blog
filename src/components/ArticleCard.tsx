@@ -1,9 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { api } from "~/utils/api";
-import catSrc from "images/cat1.svg";
-import circleSrc from "images/circle.svg";
-
+import CircleSrc from "images/circle.svg";
+const circleSrc = CircleSrc as string
 //todo:how to get a link to the image and remove the nasty type
 export type ArticleCardProps = {
     id: string;
@@ -27,9 +26,7 @@ export function ArticleCard(article: ArticleCardProps) {
     return (
         <div className="flex border">
             <Image
-                objectFit="cover"
                 width={272}
-                height={244}
                 src={article.imageUrl}
                 alt="face of a cat"
                 className="object-cover"

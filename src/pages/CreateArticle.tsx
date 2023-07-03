@@ -171,14 +171,6 @@ export function ArticleEditor({
             }
         });
     }
-    const [md, setMd] = useState('hi')
-    const handleMD = (e: ChangeEvent<HTMLTextAreaElement>) => {
-        e.preventDefault()
-        const text = e.target.value
-        if (text.length > 0) return setMd(text)
-        setMd(' ')
-
-    }
     return (
         <>
             <NavBar />

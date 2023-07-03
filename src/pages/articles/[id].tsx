@@ -1,4 +1,5 @@
-import { FormEvent, useState } from "react";
+import type { FormEvent } from "react";
+import { useState } from "react";
 import type {
     GetStaticPaths,
     GetStaticPropsContext,
@@ -7,7 +8,6 @@ import type {
 } from "next";
 
 import type { ArticleCardProps } from "~/components/ArticleCard";
-import { Button } from "~/components/Button";
 import ErrorPage from "next/error";
 import Image from "next/image";
 import InfiniteScroll from "react-infinite-scroll-component";
@@ -15,12 +15,16 @@ import { LoadingSpinner } from "~/components/LoadingSpinner";
 import { NavBar } from "~/components/NavBar";
 import { VscAccount } from "react-icons/vsc";
 import { api } from "~/utils/api";
-import circleSrc from "images/circle.svg";
-import downVoteIcon from "images/chevron-Down.svg";
+import CircleSrc from "images/circle.svg";
+import DownVoteIcon from "images/chevron-Down.svg";
 import { ssgHelper } from "~/server/api/ssgHelper";
-import upVoteIcon from "images/chevron-up.svg";
+import UpVoteIcon from "images/chevron-up.svg";
 import { useSession } from "next-auth/react";
 import ReactMarkdown from 'react-markdown'
+
+const upVoteIcon = UpVoteIcon as string
+const downVoteIcon = DownVoteIcon as string
+const circleSrc = CircleSrc as string
 
 const ArticlePage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
     id,
@@ -30,10 +34,6 @@ const ArticlePage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
     if (article == null || article.title == null) {
         return <ErrorPage statusCode={404} />;
     }
-    const dateTimeFormater = new Intl.DateTimeFormat(undefined, {
-        dateStyle: "short",
-    });
-    const trpcUtils = api.useContext();
     return (
         <>
             {/* //todo:make navbar global */}
@@ -197,7 +197,6 @@ function InfiniteCommentList({
 }
 
 function CommentForm({
-    className,
     articleId,
 }: {
     className?: string;
@@ -387,7 +386,7 @@ function CommentCard({
 
 export function ProfileImage({
     src,
-    className,
+    className = '',
 }: {
     src?: string;
     className?: string;
