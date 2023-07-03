@@ -21,6 +21,7 @@ import { ssgHelper } from "~/server/api/ssgHelper";
 import UpVoteIcon from "images/chevron-up.svg";
 import { useSession } from "next-auth/react";
 import ReactMarkdown from 'react-markdown'
+import Link from "next/link";
 
 const upVoteIcon = UpVoteIcon as string
 const downVoteIcon = DownVoteIcon as string
@@ -69,9 +70,11 @@ function SideArticlesList({ mainArticleId }: { mainArticleId: string }) {
                 <ul className="flex flex-col gap-y-6 ">
                     {sideArticles.map(article => {
                         return (<li key={article.id}>
-                            <h6 className="mb-2  text-base font-medium">
-                                {article.title}
-                            </h6>
+                            <Link href={`/articles/${article.id}`} >
+                                <h6 className="mb-2  text-base font-medium">
+                                    {article.title}
+                                </h6>
+                            </Link>
                             <div className=" font-normal text-neutral-800">
                                 {article.perex}
                             </div>
@@ -91,10 +94,9 @@ function Article(article: ArticleCardProps) {
     //todo font family halvetica neu
     //todo ?
     if (!article.fullText) article.fullText = ''
-    const fullText = article.fullText
     return (
         <>
-            <div className="grid max-w-3xl grid-cols-1 gap-6 ">
+            <div className="grid max-w-3xl grid-cols-1 min-w-fit gap-6 ">
                 {/* article */}
                 <h1 className=" text-4xl font-medium">{article.title}</h1>
                 <div className="flex   text-sm text-gray-500">
@@ -104,12 +106,17 @@ function Article(article: ArticleCardProps) {
                         {dateTimeFormater.format(article.date)}
                     </div>
                 </div>
-                <Image src={article.imageUrl} alt="face of a cat" width={760} height={504} />
-                <p className="whitespace-pre-wrap border-b -neutral-200 pb-10 text-base">
+
+                <div className="relative" style={{ width: 760, height: 504 }}>
+                    <Image
+                        src={article.imageUrl}
+                        alt="My Image"
+                        fill
+                        style={{ objectFit: 'cover' }}
+                    />
+                </div>
+                <ReactMarkdown className="whitespace-pre-wrap border-b -neutral-200 pb-10 max-w-3xl pr-2  text-base">
                     {article.fullText}
-                </p>
-                <ReactMarkdown >
-                    {fullText}
                 </ReactMarkdown>
                 {/* <div className="h-10 -b -neutral-200"></div> */}
                 {/* comments count */}

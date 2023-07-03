@@ -7,7 +7,7 @@ const Blog: NextPage = () => {
     return (
         <>
             <NavBar />
-            <h1 className="mt-16 border text-5xl">Recent articles</h1>
+            <h1 className="mt-16 text-5xl">Recent articles</h1>
             <ArticleCardList />
         </>
     );

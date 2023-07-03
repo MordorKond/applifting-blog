@@ -3,7 +3,6 @@ import Link from "next/link";
 import { api } from "~/utils/api";
 import CircleSrc from "images/circle.svg";
 const circleSrc = CircleSrc as string
-//todo:how to get a link to the image and remove the nasty type
 export type ArticleCardProps = {
     id: string;
     imageUrl: string;
@@ -24,30 +23,33 @@ export function ArticleCard(article: ArticleCardProps) {
         dateStyle: "short",
     });
     return (
-        <div className="flex border">
-            <Image
-                width={272}
-                src={article.imageUrl}
-                alt="face of a cat"
-                className="object-cover"
-            />
-            <div className="ml-6 max-w-xl flex-grow border">
-                <h4 className="border  text-2xl font-medium">{article.title}</h4>
-                <div className="flex border py-4 text-sm text-gray-500">
-                    <div className="t border">{article.author}</div>
-                    <Image src={circleSrc} alt="circle" className="mx-3" />
-                    <div className="t border">
+        <div className="flex ">
+            <div style={{ position: 'relative', width: 272, height: 244 }}>
+                <Image
+                    src={article.imageUrl}
+                    alt="article image"
+                    fill
+                    style={{ objectFit: 'cover' }}
+                />
+
+            </div>
+            <div className="ml-6 max-w-xl flex-grow ">
+                <h4 className="  text-2xl font-medium">{article.title}</h4>
+                <div className="flex  py-4 text-sm text-gray-500">
+                    <div className="t ">{article.author}</div>
+                    <Image src={circleSrc} height={4} alt="circle" className="mx-3" />
+                    <div className="t ">
                         {dateTimeFormater.format(article.date)}
                     </div>
                 </div>
-                <div className="t border text-base">{article.description}</div>
-                <div className="mt-5 flex gap-5 border">
+                <div className="t  text-base">{article.description}</div>
+                <div className="mt-5 flex gap-5 ">
                     <Link href={`./articles/${article.id}`}>
-                        <button className=" border pl-1 text-sm text-blue-600">
+                        <button className="  pl-1 text-sm text-blue-600">
                             Read whole article
                         </button>
                     </Link>
-                    <div className="t border">
+                    <div className="t ">
                         {article.commentsCount}
                         {getPlural(article.commentsCount, " comment", " comments")}{" "}
                     </div>

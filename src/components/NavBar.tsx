@@ -46,17 +46,19 @@ export function NavBar() {
                     </div>
                 </div>
             ) : (
-                <button
-                    onClick={() => void signIn()}
-                    className=" flex flex-grow justify-end"
-                >
-                    <div className=" mb-4 mt-4  text-blue-500">Log in</div>
-                    <Image
-                        src={arrowSrc}
-                        alt="arrow right"
-                        className="mb-4 ml-1 mt-4  text-blue-500"
-                    />
-                </button>
+                <div className="flex-grow grid">
+                    <button
+                        onClick={() => void signIn()}
+                        className="flex flex-grow justify-self-end"
+                    >
+                        <div className=" mb-4 mt-4  text-blue-500">Log in</div>
+                        <Image
+                            src={arrowSrc}
+                            alt="arrow right"
+                            className="mb-4 ml-1 mt-4  text-blue-500"
+                        />
+                    </button>
+                </div>
             )}
         </header>
     );

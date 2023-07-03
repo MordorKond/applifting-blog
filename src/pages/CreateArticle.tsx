@@ -7,8 +7,11 @@ import { useRouter } from "next/router";
 import type { ChangeEvent } from "react"
 import type { NextPage } from "next";
 import axios from "axios";
+import { useSession } from "next-auth/react";
 
 const CreateArticle: NextPage = () => {
+    const session = useSession()
+    if (session.status !== 'authenticated') return null
     return (<>
         <ArticleEditor />
     </>
@@ -18,14 +21,16 @@ const CreateArticle: NextPage = () => {
 export function TitleAndAction({
     title,
     action,
+    fn,
 }: {
     title: string;
     action: string;
+    fn: () => void;
 }) {
     return (
-        <div className="mt-12 flex items-center gap-8 border">
-            <h1 className=" border text-5xl">{title}</h1>
-            <button id='action' className="h-9 rounded bg-blue-600 px-3 text-white">
+        <div className="mt-12 flex items-center gap-8">
+            <h1 className=" text-5xl">{title}</h1>
+            <button onClick={fn} id='action' className="h-9 rounded bg-blue-600 px-3 text-white">
                 {action}
             </button>
         </div>
@@ -188,6 +193,7 @@ export function ArticleEditor({
                     <TitleAndAction
                         title={isNew ? "Create new article" : "Edit article"}
                         action={"Publish Article"}
+                        fn={() => console.log('action')}
                     />
                     <div className="mt-8 ">Article Title</div>
                     <input
@@ -200,7 +206,7 @@ export function ArticleEditor({
                         onChange={handleInputChange}
                     />
 
-                    <div className="mt-8 border">Featured image</div>
+                    <div className="mt-8">Featured image</div>
                     <input type="file" accept="image/*"
                         ref={testInputRef}
                         hidden
@@ -235,7 +241,7 @@ export function ArticleEditor({
                     }
                     <div className="">
                     </div>
-                    <div className="mt-10 border">Content</div>
+                    <div className="mt-10">Content</div>
                     <textarea
 
                         placeholder="Supports markdown. Yay!"
