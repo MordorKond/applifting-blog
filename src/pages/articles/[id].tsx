@@ -258,6 +258,7 @@ function CommentForm({
             <div className="flex flex-grow gap-6">
                 <ProfileImage src={session.data.user.image || undefined} />
                 <input
+                    id='comment-field'
                     // ref={inputRef}
                     // style={{ height: 0 }}
                     style={{ height: 46 }}

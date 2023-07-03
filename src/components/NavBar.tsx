@@ -20,20 +20,20 @@ export function NavBar() {
             />
             <div className="mb-4 ml-10 mt-3 flex ">
                 <Link href="/blog">
-                    <div className=" text-neutral-800">Recent Articles</div>
+                    <div id="recent-articles" className=" text-neutral-800">Recent Articles</div>
                 </Link>
                 <Link href="/blog/about" className="ml-10">
-                    <div className=" text-gray-500">About</div>
+                    <div id="about" className=" text-gray-500">About</div>
                 </Link>
             </div>
             {session.status == "authenticated" ? (
                 <div className="cente flex flex-grow justify-end  -blue-500">
                     <div className=" flex flex-row items-center gap-10 ">
                         <Link href={"/MyArticles/"}>
-                            <div>My Articles</div>
+                            <div id="my-articles">My Articles</div>
                         </Link>
                         <Link href={"/CreateArticle/"}>
-                            <div className="text-blue-600">Create Article</div>
+                            <div id="create-article" className="text-blue-600">Create Article</div>
                         </Link>
                         <div className="flex">
                             <Image src={arrowStepper} alt='arrow stepper' />

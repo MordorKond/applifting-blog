@@ -68,9 +68,10 @@ function ArticlesTable() {
                             <td className="border-b">
                                 <div className="flex items-center gap-3 px-3">
                                     <Link href={`/Edit/${x.id}`}>
-                                        <Image className="m-2 " src={penImg} alt="eddit icon" />
+                                        <Image id="eddit" className="m-2 " src={penImg} alt="eddit icon" />
                                     </Link>
                                     <button
+                                        id='delete'
                                         onClick={() =>
                                             void deleteArticle.mutate({ articleId: x.id })
                                         }
