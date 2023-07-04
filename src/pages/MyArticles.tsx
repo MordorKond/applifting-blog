@@ -1,4 +1,3 @@
-import { NavBar } from "~/components/NavBar";
 import { TitleAndAction } from "./CreateArticle";
 import { api } from "~/utils/api";
 import Image from "next/image";
@@ -26,7 +25,6 @@ const MyArticles: NextPage = () => {
     return (
         <>
             <div className=""></div>
-            <NavBar />
             <TitleAndAction title={"My articles"} action={"Create new article"} fn={() => handleClick} />
             <ArticlesTable />
         </>

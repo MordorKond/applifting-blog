@@ -12,7 +12,6 @@ import ErrorPage from "next/error";
 import Image from "next/image";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { LoadingSpinner } from "~/components/LoadingSpinner";
-import { NavBar } from "~/components/NavBar";
 import { VscAccount } from "react-icons/vsc";
 import { api } from "~/utils/api";
 import CircleSrc from "images/circle.svg";
@@ -38,7 +37,6 @@ const ArticlePage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
     return (
         <>
             {/* //todo:make navbar global */}
-            <NavBar />
             {/* //todo:fix the image to come from article*/}
             {/* //todo:remove the !asertion*/}
             <main className="flex gap-6 pt-16">

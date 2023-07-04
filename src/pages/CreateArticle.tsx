@@ -1,7 +1,6 @@
 import "@uploadthing/react/styles.css";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { NavBar } from "~/components/NavBar";
 import { api } from "~/utils/api";
 import { useRouter } from "next/router";
 import type { ChangeEvent } from "react"
@@ -178,7 +177,6 @@ export function ArticleEditor({
     }
     return (
         <>
-            <NavBar />
             <div className="max-w-4xl">
                 <form
                     onSubmit={(e) => {

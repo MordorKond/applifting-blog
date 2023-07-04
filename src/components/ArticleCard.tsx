@@ -15,10 +15,6 @@ export type ArticleCardProps = {
 };
 export function ArticleCard(article: ArticleCardProps) {
     //todo text title and description verticle size control
-    //? note the numebr of charactes in the description
-    //? we might have to use a hook for that ....
-    //todo font family halvetica neu
-    //todo ?
     const dateTimeFormater = new Intl.DateTimeFormat(undefined, {
         dateStyle: "short",
     });
@@ -31,7 +27,6 @@ export function ArticleCard(article: ArticleCardProps) {
                     fill
                     style={{ objectFit: 'cover' }}
                 />
-
             </div>
             <div className="ml-6 max-w-xl flex-grow ">
                 <h4 className="  text-2xl font-medium">{article.title}</h4>
