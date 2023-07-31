@@ -25,7 +25,7 @@ const MyArticles: NextPage = () => {
     return (
         <>
             <div className=""></div>
-            <TitleAndAction title={ARTICLES} action={"Create new article"} fn={() => handleClick} />
+            <TitleAndAction title={"My articles"} action={"Create new article"} fn={() => handleClick} />
             <ArticlesTable />
         </>
     );
